@@ -13,6 +13,9 @@ public class Neuron {
 	public double[] eAOut;
 	public double[] oANet;
 	public String id;
+	public double lastOut;
+	public double lastIn;
+	public String functionString;
 	private static int counter;
 
 	public Neuron(int function) {
@@ -39,14 +42,19 @@ public class Neuron {
 	private double activate(int i) {
 		switch (function) {
 		case 3:
+			this.functionString = "f(x)=x*x"; 
 			return sinapsis[i].activate(Functions.SELU(net));
 		case 2:
+			this.functionString = "f(x)=x>0?2*x:x"; 
 			return sinapsis[i].activate(Functions.leckyPreLU(net));
 		case 1:
+			this.functionString = "f(x)=x>0?1:0"; 
 			return sinapsis[i].activate(Functions.binaryStep(net));
 		case 0:
+			this.functionString = "f(x)=1/(1+e^-x)"; 
 			return sinapsis[i].activate(Functions.logistic(net));
 		case -1:
+			this.functionString = "f(x)=x"; 
 			return sinapsis[i].activate(net);
 		}
 		return 0;

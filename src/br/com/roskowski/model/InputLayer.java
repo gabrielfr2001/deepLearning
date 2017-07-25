@@ -17,6 +17,7 @@ public class InputLayer extends Layer {
 	public void setInputs(double[] i) {
 		for (int o = 0; o < i.length; o++) {
 			try {
+				neurons[o].lastIn = i[o];
 				neurons[o].net = i[o];
 			} catch (Exception e) {
 				e.printStackTrace();

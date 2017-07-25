@@ -14,7 +14,9 @@ public class Layer {
 
 	public void reset() {
 		for (int i = 0; i < neurons.length; i++) {
+			neurons[i].lastIn = neurons[i].net;
 			neurons[i].net = 0;
+			neurons[i].lastOut = neurons[i].out;
 			neurons[i].out = 0;
 		}
 	}

@@ -3,6 +3,7 @@ package br.com.roskowski.model;
 import java.util.Random;
 
 public class Learner {
+	private static Display display;
 	private double[][] target;
 	private double[][] input;
 	private int hiddenLayersSize;
@@ -24,38 +25,36 @@ public class Learner {
 	}
 
 	public static void main(String[] args) {
-		double[][] input = { { 0.01 }, { 0.02 }, { 0.03 }, { 0.04 } };
-		double[][] target = { { 0.02 }, { 0.04 }, { 0.06 }, { 0.08 } };
-		//double predef[][][] = { { { 0 }, { .15, .25 }, { .20, .30 } }, { { .35 }, { .40, .50 }, { .45, .55 } },
-		//		{ { .60 } } };
-		Learner learner = new Learner(input, target);
+		double[][] input = { { 0.01, 0.05 }};
+		double[][] target = { { 0.99,0.01 } };
+		// double predef[][][] = { { { 0 }, { .15, .25 }, { .20, .30 } }, { {
+		// .35 }, { .40, .50 }, { .45, .55 } },
+		// { { .60 } } };
+		final Learner learner = new Learner(input, target);
 		learner.hiddenLayersNumber = 2;
 		learner.hiddenLayersSize = 2;
 		learner.prepare();
-		learner.trainInThread(0.00001, new CallBack() {
-			public void callback() {
-				for (int i = 0; i < 100; i++) {
-					double[] test = { i/100f };
-					double result[] = learner.test(test);
-					for (double d : result) {
-						System.out.println(d);
-					}
-				}
-			}
-		});
+		display = new Display(600, 600, "IA");
+		display.setLearner(learner);
+
+		Thread thread = new Thread(new ThreadHolder(learner, 1E-40));
+		thread.run();
+
+		display.setLearner(learner);
 		System.out.println(9);
 	}
 
-	private void trainInThread(double d, CallBack callBack) {
-		new Runnable() {
+	void trainInThread(double d, CallBack callBack) {
+		Thread t = new Thread(new Runnable() {
 			public void run() {
 				train(d);
 				callBack.callback();
 			}
-		}.run();
+		});
+		t.run();
 	}
 
-	private double[] test(double[] test) {
+	double[] test(double[] test) {
 		inputLayer.setInputs(test);
 		inputLayer.activate();
 
@@ -64,6 +63,7 @@ public class Learner {
 			hidden.applyBias();
 			hidden.activate();
 		}
+
 		outputLayer.applyBias();
 		outputLayer.activate();
 		double[] result = outputLayer.getResult();
@@ -81,14 +81,14 @@ public class Learner {
 		for (int i = 0; i < hiddenLayersNumber; i++) {
 			if (i > 0) {
 				hiddenLayers[i] = new HiddenLayer(hiddenLayersSize, target[0].length);
-				hiddenLayers[i].prepare(f);
+				hiddenLayers[i].prepare(f,hiddenLayersSize);
 				hiddenLayers[i - 1].link(hiddenLayers[i]);
 			} else if (i == hiddenLayersNumber - 1) {
 				hiddenLayers[i] = new HiddenLayer(hiddenLayersSize);
-				hiddenLayers[i].prepare(f);
+				hiddenLayers[i].prepare(f,hiddenLayersSize);
 			} else {
 				hiddenLayers[i] = new HiddenLayer(hiddenLayersSize);
-				hiddenLayers[i].prepare(f);
+				hiddenLayers[i].prepare(f,hiddenLayersSize);
 			}
 		}
 
@@ -141,7 +141,7 @@ public class Learner {
 				}
 				outputLayer.applyBias();
 				outputLayer.activate();
-				error = outputLayer.calculateTotalError(i);
+				error += outputLayer.calculateTotalError(i) / target.length;
 				if (error > maxerror) {
 					maxerror = error;
 				}
@@ -162,9 +162,16 @@ public class Learner {
 
 				resetLayers();
 			}
-			if (eval % 100 == 0) {
-				System.out.println(eval + " " + maxerror + " " + outputLayer.neurons[0].out);
+			if (eval % 10000 == 0) {
+				System.out.println(eval + " " + error + " " + outputLayer.neurons[0].out);
+				display.learner = this;
 			}
+			//try {
+			//	Thread.sleep(1);
+			//} catch (InterruptedException e) {
+		//		// TODO Auto-generated catch block
+		//		e.printStackTrace();
+	//		}
 		}
 	}
 
